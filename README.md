@@ -4,7 +4,9 @@ A semantic search engine over Reddit content, built on `sqlite-vss` for vector s
 
 ## Why this exists
 
-Keyword search on Reddit misses intent. Searching "deep learning for edge devices" won't surface a post titled "running small neural nets on a Raspberry Pi" even though it's exactly what you want. This project embeds post content into dense vectors and retrieves by similarity instead of literal token overlap, turning scattered subreddit browsing into a queryable personal knowledge base.
+Reddit's own search only matches words, not meaning. If you search "deep learning for edge devices," it won't show you a post titled "running small neural nets on a Raspberry Pi" — even though that's exactly what you're looking for — because the words don't overlap.
+
+This project fixes that by understanding what a post is *about*, not just what words it contains. Every post gets converted into a numerical representation of its meaning (an embedding), and search works by finding posts whose meaning is closest to your query, rather than posts that happen to share your exact phrasing. The result is a personal, searchable knowledge base built from Reddit — one you can query the way you'd ask a question, not the way you'd guess a keyword.
 
 ## Architecture
 
