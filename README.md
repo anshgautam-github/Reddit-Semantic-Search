@@ -53,13 +53,10 @@ flowchart LR
 
 ## Features
 
-- **Semantic search** — natural-language queries matched by meaning, not keywords.
-- **Faceted search** — result breakdowns by subreddit and score tier.
-- **"More like this"** — find posts similar to a given post, optionally excluding its own subreddit.
-- **Cross-subreddit analysis** — rank which subreddits are most relevant to a query, aggregated by similarity score.
-- **Filtered retrieval** — combine vector similarity with structured filters (subreddit, minimum score, date range) in one query via an over-fetch-then-filter candidate strategy.
-- **Idempotent ingestion** — re-running ingestion on the same subreddit upserts rather than duplicates.
-- **Batched embedding inference** — amortizes model overhead across posts instead of per-row calls.
+- **Semantic search** — query in plain English and get back posts matched by meaning, not shared keywords. "Deep learning for edge devices" surfaces a post titled "running small neural nets on a Raspberry Pi" even though the two share almost no vocabulary.
+- **Filtered semantic search** — vector similarity combined with structured filters (subreddit, minimum score, date range) in a single query, so you can ask for "posts like this, but only from r/MachineLearning, only if well-received, only from the last month."
+- **Find similar posts** — given any post already in the knowledge base, retrieve its nearest neighbors by embedding distance, optionally excluding its own subreddit to surface cross-community echoes of the same idea.
+- **Cross-subreddit relevance ranking** — for a given query, rank which subreddits are most relevant to it overall, not just which individual posts rank highest, by aggregating similarity scores per subreddit.
 
 ## Tech stack
 
