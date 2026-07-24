@@ -8,17 +8,33 @@ Keyword search on Reddit misses intent. Searching "deep learning for edge device
 
 ## Architecture
 
+The system splits into two independent paths: an **offline pipeline** that builds the knowledge base, and an **online path** that serves queries against it. This separation means ingestion (slow, API-rate-limited, batch) never blocks search (fast, local, interactive).
+
+### 1. Knowledge base construction (offline / batch)
+
+```mermaid
+flowchart LR
+    A[Reddit API\nPRAW] -->|fetch posts\nrate-limited + backoff| B[Text Preprocessor]
+    B -->|strip markdown, URLs,\nReddit artifacts| C{Quality filter}
+    C -->|pass| D[Batch of 32 texts]
+    C -->|fail| X[Skipped]
+    D --> E[Sentence-Transformer\nEmbedding Model]
+    E -->|384-dim float32 vectors| F[(SQLite: posts table\nmetadata + embedding blob)]
+    F --> G[VectorIndexManager]
+    G -->|vector_from_json| H[(sqlite-vss\nposts_vss ANN index)]
 ```
-Reddit API (PRAW) ──► Text Preprocessing ──► Sentence-Transformer Embeddings
-                                                        │
-                                                        ▼
-                                          SQLite (posts table + metadata)
-                                                        │
-                                                        ▼
-                                        sqlite-vss virtual table (ANN index)
-                                                        │
-                                                        ▼
-                                          Semantic Search / Similarity API
+
+### 2. User query flow (online / interactive)
+
+```mermaid
+flowchart LR
+    U([User query]) --> P[Text Preprocessor\nnormalize query]
+    P --> Q[Embedding Model\nencode query]
+    Q -->|query vector| S["vss_search()\nANN candidate retrieval\n(limit × candidate_multiplier)"]
+    S --> J[Join candidates\nwith posts table]
+    J --> Filt{Apply filters\nsubreddit / score / date}
+    Filt --> Rank[Order by distance\nLIMIT k]
+    Rank --> R([Ranked SearchResult list\n+ similarity score])
 ```
 
 **Design choice: SQLite + sqlite-vss over a dedicated vector DB.** For a personal/single-user knowledge base, running Pinecone/Weaviate/Milvus is overkill — extra infra, extra ops, extra latency for no benefit at this scale. `sqlite-vss` gives ANN vector search with zero additional services, while keeping metadata (score, subreddit, timestamps) in the same transactional store as the vectors, so filtered search is a single SQL query instead of a fan-out across two systems.
